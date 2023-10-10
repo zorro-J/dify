@@ -1,7 +1,7 @@
 from typing import cast, List
 
+from langchain.adapters.openai import convert_message_to_dict
 from langchain.chat_models import ChatOpenAI
-from langchain.chat_models.openai import _convert_message_to_dict
 from langchain.memory.summary import SummarizerMixin
 from langchain.schema import SystemMessage, HumanMessage, BaseMessage, AIMessage
 from langchain.schema.language_model import BaseLanguageModel
@@ -73,12 +73,12 @@ class OpenAIFunctionCallSummarizeMixin(BaseModel, CalcTokenMixin):
         main/examples/How_to_format_inputs_to_ChatGPT_models.ipynb"""
         llm = cast(ChatOpenAI, model_instance.client)
         model, encoding = llm._get_encoding_model()
-        if model.startswith("gpt-3.5-turbo"):
+        if model.startswith("gpt-3.5-turbo-0301"):
             # every message follows <im_start>{role/name}\n{content}<im_end>\n
             tokens_per_message = 4
             # if there's a name, the role is omitted
             tokens_per_name = -1
-        elif model.startswith("gpt-4"):
+        elif model.startswith("gpt-3.5-turbo") or model.startswith("gpt-4"):
             tokens_per_message = 3
             tokens_per_name = 1
         else:
@@ -90,7 +90,7 @@ class OpenAIFunctionCallSummarizeMixin(BaseModel, CalcTokenMixin):
             )
         num_tokens = 0
         for m in messages:
-            message = _convert_message_to_dict(m)
+            message = convert_message_to_dict(m)
             num_tokens += tokens_per_message
             for key, value in message.items():
                 if key == "function_call":

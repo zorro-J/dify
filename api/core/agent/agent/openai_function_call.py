@@ -1,8 +1,8 @@
 from typing import List, Tuple, Any, Union, Sequence, Optional
 
 from langchain.agents import OpenAIFunctionsAgent, BaseSingleActionAgent
-from langchain.agents.openai_functions_agent.base import _parse_ai_message, \
-    _format_intermediate_steps
+from langchain.agents.format_scratchpad import format_to_openai_functions
+from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain.callbacks.base import BaseCallbackManager
 from langchain.callbacks.manager import Callbacks
 from langchain.prompts.chat import BaseMessagePromptTemplate
@@ -68,6 +68,7 @@ class AutoSummarizingOpenAIFunctionCallAgent(OpenAIFunctionsAgent, OpenAIFunctio
             self,
             intermediate_steps: List[Tuple[AgentAction, str]],
             callbacks: Callbacks = None,
+            with_functions: bool = True,
             **kwargs: Any,
     ) -> Union[AgentAction, AgentFinish]:
         """Given input, decided what to do.
@@ -79,7 +80,7 @@ class AutoSummarizingOpenAIFunctionCallAgent(OpenAIFunctionsAgent, OpenAIFunctio
         Returns:
             Action specifying what tool to use.
         """
-        agent_scratchpad = _format_intermediate_steps(intermediate_steps)
+        agent_scratchpad = format_to_openai_functions(intermediate_steps)
         selected_inputs = {
             k: kwargs[k] for k in self.prompt.input_variables if k != "agent_scratchpad"
         }
@@ -93,10 +94,21 @@ class AutoSummarizingOpenAIFunctionCallAgent(OpenAIFunctionsAgent, OpenAIFunctio
         except ExceededLLMTokensLimitError as e:
             return AgentFinish(return_values={"output": str(e)}, log=str(e))
 
-        predicted_message = self.llm.predict_messages(
-            messages, functions=self.functions, callbacks=callbacks
+        if with_functions:
+            predicted_message = self.llm.predict_messages(
+                messages,
+                functions=self.functions,
+                callbacks=callbacks,
+            )
+        else:
+            predicted_message = self.llm.predict_messages(
+                messages,
+                callbacks=callbacks,
+            )
+
+        agent_decision = OpenAIFunctionsAgentOutputParser._parse_ai_message(
+            predicted_message
         )
-        agent_decision = _parse_ai_message(predicted_message)
 
         if isinstance(agent_decision, AgentAction) and agent_decision.tool == 'dataset':
             tool_inputs = agent_decision.tool_input

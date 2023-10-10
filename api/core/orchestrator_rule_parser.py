@@ -2,10 +2,10 @@ import math
 from typing import Optional
 
 from flask import current_app
-from langchain import WikipediaAPIWrapper
 from langchain.callbacks.manager import Callbacks
 from langchain.memory.chat_memory import BaseChatMemory
 from langchain.tools import BaseTool, Tool, WikipediaQueryRun
+from langchain.utilities.wikipedia import WikipediaAPIWrapper
 from pydantic import BaseModel, Field
 
 from core.agent.agent_executor import AgentExecutor, PlanningStrategy, AgentConfiguration
@@ -77,7 +77,7 @@ class OrchestratorRuleParser:
             # only OpenAI chat model (include Azure) support function call, use ReACT instead
             if agent_model_instance.model_mode != ModelMode.CHAT \
                     or agent_model_instance.model_provider.provider_name not in ['openai', 'azure_openai']:
-                if planning_strategy in [PlanningStrategy.FUNCTION_CALL, PlanningStrategy.MULTI_FUNCTION_CALL]:
+                if planning_strategy == PlanningStrategy.FUNCTION_CALL:
                     planning_strategy = PlanningStrategy.REACT
                 elif planning_strategy == PlanningStrategy.ROUTER:
                     planning_strategy = PlanningStrategy.REACT_ROUTER

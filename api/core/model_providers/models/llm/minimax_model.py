@@ -1,14 +1,13 @@
-import decimal
 from typing import List, Optional, Any
 
 from langchain.callbacks.manager import Callbacks
-from langchain.llms import Minimax
 from langchain.schema import LLMResult
 
 from core.model_providers.error import LLMBadRequestError
 from core.model_providers.models.llm.base import BaseLLM
 from core.model_providers.models.entity.message import PromptMessage, MessageType
 from core.model_providers.models.entity.model_params import ModelMode, ModelKwargs
+from core.third_party.langchain.llms.minimax_llm import MinimaxLLM
 
 
 class MinimaxModel(BaseLLM):
@@ -16,7 +15,7 @@ class MinimaxModel(BaseLLM):
 
     def _init_client(self) -> Any:
         provider_model_kwargs = self._to_model_kwargs_input(self.model_rules, self.model_kwargs)
-        return Minimax(
+        return MinimaxLLM(
             model=self.name,
             model_kwargs={
                 'stream': False

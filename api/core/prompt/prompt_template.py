@@ -2,8 +2,8 @@ import re
 from typing import Any
 
 from jinja2 import Environment, meta
-from langchain import PromptTemplate
 from langchain.formatting import StrictFormatter
+from langchain.prompts import PromptTemplate
 
 
 class JinjaPromptTemplate(PromptTemplate):
